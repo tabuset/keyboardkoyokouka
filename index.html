@@ -15,15 +15,15 @@
             display: flex;
             user-select: none;
             overflow-x: auto;
-            overflow-y: hidden; /* 追加: クリック時の縦揺れ・スクロールバー出現を防止 */
+            overflow-y: hidden;
             -webkit-overflow-scrolling: touch;
             border-radius: 0 0 8px 8px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         .key-white {
-            flex: 1 1 0%; /* 変更: コンテナに合わせて均等に縮むように設定 */
-            min-width: 0; /* 変更: 最小幅の制限を解除 */
+            flex: 1 1 0%;
+            min-width: 0;
             border: 1px solid #cbd5e1;
             border-radius: 0 0 5px 5px;
             background: linear-gradient(to bottom, #ffffff 0%, #f1f5f9 100%);
@@ -35,14 +35,17 @@
             justify-content: center;
             padding-bottom: 15px;
             cursor: pointer;
-            transition: background 0.05s, transform 0.05s;
-            overflow: hidden; /* 追加: 鍵盤が細くなった時に文字がはみ出すのを防止 */
+            transition: background 0.05s, transform 0.05s, box-shadow 0.05s;
+            overflow: hidden;
         }
 
+        /* 白鍵を押したときのスタイル（青く太い枠線） */
         .key-white.active {
             background: #e2e8f0;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+            /* insetを使って内側に太い枠線を描画し、レイアウト崩れを防ぐ */
+            box-shadow: inset 0 0 0 3px #3b82f6, inset 0 2px 4px rgba(0,0,0,0.2);
             transform: translateY(1px);
+            z-index: 10;
         }
 
         .key-black {
@@ -54,13 +57,24 @@
             border: 1px solid #000;
             box-shadow: inset 0 0 4px rgba(255,255,255,0.2), 2px 2px 3px rgba(0,0,0,0.3);
             cursor: pointer;
-            transition: background 0.05s, transform 0.05s;
+            transition: background 0.05s, transform 0.05s, box-shadow 0.05s;
         }
 
+        /* 黒鍵を押したときのスタイル（青く太い枠線） */
         .key-black.active {
             background: #1e293b;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+            box-shadow: inset 0 0 0 3px #3b82f6, inset 0 2px 4px rgba(0,0,0,0.5);
             transform: translateY(1px);
+            z-index: 10;
+        }
+
+        /* 次に押すべき鍵盤の黄色ハイライト */
+        .key-white.practice-target {
+            background: #fef08a !important; /* 明るい黄色 */
+        }
+        .key-black.practice-target {
+            background: #eab308 !important; /* 少し暗めの黄色（黒鍵用） */
+            border-color: #ca8a04 !important;
         }
 
         .note-label {
@@ -69,41 +83,40 @@
             color: #64748b;
             pointer-events: none;
             user-select: none;
-            display: none; /* 初期状態は非表示 */
+            display: none;
         }
 
         .show-labels .note-label {
             display: block;
         }
 
-        /* 楽曲練習モードのマーク用スタイル */
         .practice-mark {
             position: absolute;
-            bottom: 35px; /* 変更: 白鍵の下部（ドレミの文字の少し上）に配置 */
+            bottom: 35px;
             left: 50%;
             transform: translateX(-50%);
             font-size: 1.2rem;
             pointer-events: none;
             z-index: 10;
-            color: #ef4444; /* Tailwindのred-500 */
+            color: #ef4444;
             font-weight: bold;
             text-shadow: 0 0 2px white;
-            white-space: nowrap; /* 追加: 歌詞が折り返さないようにする */
-            display: flex; /* 追加: フレックスボックスで縦に並べる */
+            white-space: nowrap;
+            display: flex;
             flex-direction: column;
             align-items: center;
             line-height: 1;
         }
         .key-black .practice-mark {
-            color: #f87171; /* Tailwindのred-400 */
-            bottom: 10px; /* 変更: 黒鍵の下部に配置 */
+            color: #f87171;
+            bottom: 10px;
         }
 
         canvas {
             display: block;
             width: 100%;
             height: 180px;
-            background-color: #fdfbf7; /* 少しクリーム色がかった楽譜の色 */
+            background-color: #fdfbf7;
             border-radius: 8px 8px 0 0;
             border-bottom: 2px solid #e2e8f0;
         }
@@ -111,17 +124,14 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans p-2 md:p-6 min-h-screen flex flex-col items-center">
 
-    <!-- 追加: Webフォントを確実に読み込ませるための隠し要素 -->
     <div style="position: absolute; top: -9999px; font-family: 'Noto Music', serif; visibility: hidden;">𝄞 𝄢</div>
 
     <div class="w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
         
-        <!-- ヘッダーとコントロールパネル -->
         <div class="p-4 md:p-6 bg-slate-100 border-b border-slate-200">
             <h1 class="text-2xl font-extrabold mb-4 text-center text-slate-800 tracking-tight">ミュージックキーボード</h1>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- 音色とオクターブ -->
                 <div class="flex flex-col gap-2 p-3 bg-white rounded-lg shadow-sm border border-slate-200">
                     <label class="text-sm font-semibold text-slate-600">音色設定</label>
                     <div class="flex gap-2">
@@ -140,7 +150,6 @@
                     </div>
                 </div>
 
-                <!-- 移調機能 -->
                 <div class="flex flex-col gap-2 p-3 bg-white rounded-lg shadow-sm border border-slate-200">
                     <label class="text-sm font-semibold text-slate-600">移調 (トランスポーズ)</label>
                     <select id="transpose-select" class="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
@@ -160,7 +169,6 @@
                     <p class="text-xs text-slate-500 mt-1">※Cの鍵盤を弾いた時に鳴る調を指定します</p>
                 </div>
 
-                <!-- 表示設定 -->
                 <div class="flex flex-col gap-2 p-3 bg-white rounded-lg shadow-sm border border-slate-200 lg:col-span-1 md:col-span-2">
                     <label class="text-sm font-semibold text-slate-600">表示設定</label>
                     <div class="flex items-center mb-2">
@@ -180,7 +188,6 @@
                     </div>
                 </div>
 
-                <!-- 楽曲練習モード -->
                 <div class="flex flex-col gap-2 p-3 bg-blue-50 rounded-lg shadow-sm border border-blue-200 lg:col-span-3 md:col-span-2">
                     <label class="text-sm font-semibold text-blue-700">楽曲練習モード</label>
                     <div class="flex items-center gap-2">
@@ -210,12 +217,10 @@
             </p>
         </div>
 
-        <!-- 五線譜表示エリア -->
         <div class="relative border-b border-slate-300">
             <canvas id="staff-canvas"></canvas>
         </div>
 
-        <!-- 音域設定スライダーエリア -->
         <div class="bg-white pt-3 pb-1 border-b border-slate-200">
             <div class="flex justify-between text-[10px] text-slate-400 px-4 mb-1">
                 <span>A0</span>
@@ -226,11 +231,9 @@
                 <div class="relative w-full h-full">
                     <div class="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-1.5 bg-slate-200 rounded-full"></div>
                     <div id="range-track" class="absolute top-1/2 -translate-y-1/2 h-1.5 bg-blue-400 rounded-full cursor-grab active:cursor-grabbing touch-none"></div>
-                    <!-- 左つまみ -->
                     <div id="range-thumb-left" class="absolute top-0 w-8 h-8 cursor-ew-resize flex justify-center items-center -ml-4 z-10 touch-none">
                         <div class="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[10px] border-t-blue-600 filter drop-shadow"></div>
                     </div>
-                    <!-- 右つまみ -->
                     <div id="range-thumb-right" class="absolute top-0 w-8 h-8 cursor-ew-resize flex justify-center items-center -ml-4 z-10 touch-none">
                         <div class="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[10px] border-t-blue-600 filter drop-shadow"></div>
                     </div>
@@ -238,7 +241,6 @@
             </div>
         </div>
 
-        <!-- 鍵盤表示エリア -->
         <div id="keyboard-container" class="show-labels">
             <!-- JavaScriptで動的に生成されます -->
         </div>
@@ -246,44 +248,44 @@
     </div>
 
     <script>
-        // --- 設定と定数 ---
-        let startNote = 48; // C3 (ド)
-        let endNote = 84;   // C6
+        let startNote = 48;
+        let endNote = 84;
         let numKeys = endNote - startNote + 1;
-        const MIN_MIDI = 21; // A0 (ピアノの最低音)
-        const MAX_MIDI = 108; // C8 (ピアノの最高音)
+        const MIN_MIDI = 21;
+        const MAX_MIDI = 108;
         
         let audioCtx = null;
-        const activeNotes = new Map(); // 現在鳴っている音 { noteId: { oscillators, gainNode } }
-        const activeUINotes = new Set(); // UI上でハイライトされているノートID
+        const activeNotes = new Map();
+        const activeUINotes = new Set();
 
-        let currentInstrument = 'synth'; // 初期値を変更
+        let currentInstrument = 'synth';
         let currentTranspose = 0;
         let octaveShift = 0;
         let preferFlat = false;
 
-        // 練習モードの変数
         let isPracticing = false;
         let practiceSongData = [];
         let practiceStep = 0;
+        
+        // 校歌のメロディデータ（ニ長調: +2シフト済みの実音）
         const songs = {
             koyo1: [
-                57, 66, 64, 62, 66, 69, 66, 69, 71, 69, 66, 64, // ＜ソ＞ミレドミソミ ソラソミレ (+2)
-                66, 66, 64, 62, 64, 62, 59, 59, 57, 62, 64, 66, 62, // ミミレドレド＜ラ ラソ＞ドレミド (+2)
-                64, 64, 57, 57, 66, 64, 62, 66, 69, 74, 73, 71, 69, // レレ＜ソソ＞ミレド ミソ＞ド＜シラソ (+2)
-                69, 74, 74, 69, 66, 71, 69, 67, 66, 64, 62, 64, 66, // ソ＞ドド＜ソミラソ ファミレドレミ (+2)
-                69, 74, 69, 66, 71, 69, 67, 66, 62, 64, 64, 62, // ソ＞ド＜ソミラソ ファミドレレド (+2)
-                57, 62, 62, 66, 66, 69, 66, 69, 74, 73, 71, 74, 69, // ＜ソ＞ドドミミソミ ソ＞ド＜シラ＞ド＜ソ (+2)
-                69, 74, 69, 71, 69, 66, 62, 64, 66, 64, 64, 62  // ソ＞ド＜ソラソミドレ ミレレド (+2)
+                57, 66, 64, 62, 66, 69, 66, 69, 71, 69, 66, 64,
+                66, 66, 64, 62, 64, 62, 59, 59, 57, 62, 64, 66, 62,
+                64, 64, 57, 57, 66, 64, 62, 66, 69, 74, 73, 71, 69,
+                69, 74, 74, 69, 66, 71, 69, 67, 66, 64, 62, 64, 66,
+                69, 74, 69, 66, 71, 69, 67, 66, 62, 64, 64, 62,
+                57, 62, 62, 66, 66, 69, 66, 69, 74, 73, 71, 74, 69,
+                69, 74, 69, 71, 69, 66, 62, 64, 66, 64, 64, 62
             ],
             koyo2: [
-                57, 66, 64, 62, 66, 69, 66, 69, 71, 69, 66, 64, // ＜ソ＞ミレドミソミ ソラソミレ (+2)
-                66, 66, 64, 62, 64, 62, 59, 59, 57, 62, 64, 66, 62, // ミミレドレド＜ラ ラソ＞ドレミド (+2)
-                64, 64, 57, 57, 66, 64, 62, 66, 69, 74, 73, 71, 69, // レレ＜ソソ＞ミレド ミソ＞ド＜シラソ (+2)
-                69, 74, 74, 69, 66, 71, 69, 67, 66, 64, 62, 64, 66, // ソ＞ドド＜ソミラソ ファミレドレミ (+2)
-                69, 74, 69, 66, 71, 71, 69, 67, 66, 62, 64, 64, 62, // ソ＞ド＜ソミララソ ファミドレレド (+2)
-                57, 62, 62, 66, 66, 69, 66, 69, 74, 73, 71, 74, 69, // ＜ソ＞ドドミミソミ ソ＞ド＜シラ＞ド＜ソ (+2)
-                69, 74, 69, 71, 69, 66, 62, 64, 66, 64, 64, 62  // ソ＞ド＜ソラソミドレ ミレレド (+2)
+                57, 66, 64, 62, 66, 69, 66, 69, 71, 69, 66, 64,
+                66, 66, 64, 62, 64, 62, 59, 59, 57, 62, 64, 66, 62,
+                64, 64, 57, 57, 66, 64, 62, 66, 69, 74, 73, 71, 69,
+                69, 74, 74, 69, 66, 71, 69, 67, 66, 64, 62, 64, 66,
+                69, 74, 69, 66, 71, 71, 69, 67, 66, 62, 64, 64, 62,
+                57, 62, 62, 66, 66, 69, 66, 69, 74, 73, 71, 74, 69,
+                69, 74, 69, 71, 69, 66, 62, 64, 66, 64, 64, 62
             ]
         };
         const songsLyrics = {
@@ -311,7 +313,6 @@
             koyo2: 2   // ニ長調 (+2)
         };
 
-        // 音色のプリセット
         const instruments = {
             synth: { type1: 'sawtooth', type2: 'square', detune: -10, attack: 0.1, decay: 0.3, sustain: 0.5, release: 0.5, filterFreq: 1500 },
             organ: { type1: 'sine', type2: 'sine', detune: 1200, attack: 0.02, decay: 0.1, sustain: 0.8, release: 0.1, filterFreq: 5000 },
@@ -319,32 +320,28 @@
             famicom: { type1: 'square', type2: 'square', detune: 0, attack: 0.01, decay: 0.5, sustain: 0.2, release: 0.4, filterFreq: 8000 }
         };
 
-        // PCキーボードのマッピング (Z列がC3~, Q列がC4~)
         const keyMap = {
             'z': 0, 's': 1, 'x': 2, 'd': 3, 'c': 4, 'v': 5, 'g': 6, 'b': 7, 'h': 8, 'n': 9, 'j': 10, 'm': 11, ',': 12, 'l': 13, '.': 14, ';': 15, '/': 16,
             'q': 12, '2': 13, 'w': 14, '3': 15, 'e': 16, 'r': 17, '5': 18, 't': 19, '6': 20, 'y': 21, '7': 22, 'u': 23, 'i': 24, '9': 25, 'o': 26, '0': 27, 'p': 28, '-': 29, '[': 30, '=': 31, ']': 32
         };
 
-        // 調号のデータ定義（五線譜上のYオフセット計算用）
         const keySignatures = {
-            "0": { type: null, notes: [] }, // C
-            "-5": { type: '#', notes: ['F'] }, // G
-            "2": { type: '#', notes: ['F', 'C'] }, // D
-            "-3": { type: '#', notes: ['F', 'C', 'G'] }, // A
-            "4": { type: '#', notes: ['F', 'C', 'G', 'D'] }, // E
-            "-1": { type: '#', notes: ['F', 'C', 'G', 'D', 'A'] }, // B
-            "-6": { type: '#', notes: ['F', 'C', 'G', 'D', 'A', 'E'] }, // F#
-            "5": { type: 'b', notes: ['B'] }, // F
-            "-2": { type: 'b', notes: ['B', 'E'] }, // Bb
-            "3": { type: 'b', notes: ['B', 'E', 'A'] }, // Eb
-            "-4": { type: 'b', notes: ['B', 'E', 'A', 'D'] }, // Ab
-            "1": { type: 'b', notes: ['B', 'E', 'A', 'D', 'G'] } // Db
+            "0": { type: null, notes: [] },
+            "-5": { type: '#', notes: ['F'] },
+            "2": { type: '#', notes: ['F', 'C'] },
+            "-3": { type: '#', notes: ['F', 'C', 'G'] },
+            "4": { type: '#', notes: ['F', 'C', 'G', 'D'] },
+            "-1": { type: '#', notes: ['F', 'C', 'G', 'D', 'A'] },
+            "-6": { type: '#', notes: ['F', 'C', 'G', 'D', 'A', 'E'] },
+            "5": { type: 'b', notes: ['B'] },
+            "-2": { type: 'b', notes: ['B', 'E'] },
+            "3": { type: 'b', notes: ['B', 'E', 'A'] },
+            "-4": { type: 'b', notes: ['B', 'E', 'A', 'D'] },
+            "1": { type: 'b', notes: ['B', 'E', 'A', 'D', 'G'] }
         };
 
-        // ドレミのラベル
         const solfegeLabels = ['ド', '', 'レ', '', 'ミ', 'ファ', '', 'ソ', '', 'ラ', '', 'シ'];
 
-        // --- DOM要素 ---
         const keyboardContainer = document.getElementById('keyboard-container');
         const instrumentSelect = document.getElementById('instrument-select');
         const transposeSelect = document.getElementById('transpose-select');
@@ -356,28 +353,18 @@
         const canvas = document.getElementById('staff-canvas');
         const ctx = canvas.getContext('2d');
         
-        // スライダーDOM
         const sliderContainer = document.getElementById('range-slider-container');
         const thumbLeft = document.getElementById('range-thumb-left');
         const thumbRight = document.getElementById('range-thumb-right');
         const rangeTrack = document.getElementById('range-track');
 
-        // --- 初期化とオーディオ ---
         function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
         }
 
-        // MIDIノート番号から周波数を計算
-        function noteToFreq(note) {
-            return 440 * Math.pow(2, (note - 69) / 12);
-        }
+        function noteToFreq(note) { return 440 * Math.pow(2, (note - 69) / 12); }
 
-        // 音を鳴らす
         function playSound(midiNote) {
             initAudio();
             const inst = instruments[currentInstrument];
@@ -403,10 +390,8 @@
             gainNode.connect(audioCtx.destination);
 
             const now = audioCtx.currentTime;
-            
-            // エンベロープ設定 (ADSR)
             gainNode.gain.setValueAtTime(0, now);
-            gainNode.gain.linearRampToValueAtTime(0.5, now + inst.attack); // マスターボリューム少し下げる
+            gainNode.gain.linearRampToValueAtTime(0.5, now + inst.attack);
             gainNode.gain.linearRampToValueAtTime(0.5 * inst.sustain, now + inst.attack + inst.decay);
 
             osc1.start(now);
@@ -421,7 +406,6 @@
             const now = audioCtx.currentTime;
             const gain = soundObj.gainNode.gain;
             
-            // リリースフェーズ
             gain.cancelScheduledValues(now);
             gain.setValueAtTime(gain.value, now);
             gain.exponentialRampToValueAtTime(0.001, now + inst.release);
@@ -430,7 +414,6 @@
             soundObj.osc2.stop(now + inst.release + 0.1);
         }
 
-        // --- 鍵盤UIとイベント処理 ---
         function noteOn(baseMidi) {
             if (activeUINotes.has(baseMidi)) return;
             activeUINotes.add(baseMidi);
@@ -438,30 +421,24 @@
             const keyIndex = baseMidi - startNote;
             if (keyIndex >= 0 && keyIndex < numKeys) {
                 const keyEl = document.getElementById(`key-${keyIndex}`);
+                // CSSの.activeにより青く太い枠線が表示されます
                 if (keyEl) keyEl.classList.add('active');
             }
 
-            // 練習モードの判定
             if (isPracticing) {
-                // 出すべき実音から、現在の設定で弾くべき鍵盤を逆算して判定
                 const targetBaseMidi = practiceSongData[practiceStep] - currentTranspose - (octaveShift * 12);
                 if (baseMidi === targetBaseMidi) {
                     practiceStep++;
                     updatePracticeUI();
-                    if (practiceStep >= practiceSongData.length) {
-                        finishPractice();
-                    }
+                    if (practiceStep >= practiceSongData.length) finishPractice();
                 }
             }
 
-            // 実音の計算: MIDIノート + オクターブシフト + 移調
             const actualNote = baseMidi + (octaveShift * 12) + currentTranspose;
-            
-            // 範囲制限 (MIDI規格 0~127)
             if (actualNote >= 0 && actualNote <= 127) {
                 const sound = playSound(actualNote);
                 activeNotes.set(baseMidi, { actualNote, sound });
-                requestAnimationFrame(drawStaff); // 描画更新
+                requestAnimationFrame(drawStaff);
             }
         }
 
@@ -479,25 +456,21 @@
             if (noteData) {
                 stopSound(noteData.sound);
                 activeNotes.delete(baseMidi);
-                requestAnimationFrame(drawStaff); // 描画更新
+                requestAnimationFrame(drawStaff);
             }
         }
 
-        // 鍵盤DOMの生成
         function createKeyboard() {
             keyboardContainer.innerHTML = '';
             let whiteKeyCount = 0;
 
-            // まず白鍵の数を数える
             for (let i = 0; i < numKeys; i++) {
                 const noteClass = (startNote + i) % 12;
                 if ([0, 2, 4, 5, 7, 9, 11].includes(noteClass)) whiteKeyCount++;
             }
 
-            // 白鍵と黒鍵の幅の割合を計算
             const whiteKeyWidthPercent = 100 / whiteKeyCount;
-            const blackKeyWidthPercent = whiteKeyWidthPercent * 0.65; // 黒鍵は白鍵の65%の太さに設定
-
+            const blackKeyWidthPercent = whiteKeyWidthPercent * 0.65;
             let currentWhiteIdx = 0;
             
             for (let i = 0; i < numKeys; i++) {
@@ -508,7 +481,6 @@
                 const key = document.createElement('div');
                 key.id = `key-${i}`;
                 key.dataset.index = i;
-                
                 const activeClass = activeUINotes.has(baseMidi) ? ' active' : '';
 
                 if (!isBlack) {
@@ -516,26 +488,20 @@
                     const label = document.createElement('span');
                     label.className = 'note-label';
                     label.innerText = solfegeLabels[noteClass];
-                    
-                    // 鍵盤が細すぎるときは文字を小さくする簡易対応
                     if (whiteKeyWidthPercent < 2) label.style.fontSize = '0.5rem';
-                    
                     key.appendChild(label);
                     currentWhiteIdx++;
                 } else {
                     key.className = 'key-black' + activeClass;
-                    // 黒鍵の位置と幅をパーセンテージで設定
                     const leftPercent = (currentWhiteIdx / whiteKeyCount) * 100;
                     key.style.width = `${blackKeyWidthPercent}%`;
                     key.style.left = `${leftPercent - (blackKeyWidthPercent / 2)}%`;
                 }
-
                 keyboardContainer.appendChild(key);
             }
             if (isPracticing) updatePracticeUI();
         }
 
-        // --- 練習モードの処理 ---
         const btnPracticeStart = document.getElementById('btn-practice-start');
         const btnPracticeStop = document.getElementById('btn-practice-stop');
         const selectPracticeSong = document.getElementById('practice-song');
@@ -543,7 +509,6 @@
         const checkboxShowNext = document.getElementById('practice-show-next');
         const checkboxShowLyrics = document.getElementById('practice-show-lyrics');
 
-        // 曲が選択されたときに、自動的にその曲の調に移調する
         function applySongTranspose(songKey) {
             if (!songKey) return;
             const targetTranspose = songsTranspose[songKey];
@@ -553,19 +518,13 @@
             }
         }
 
-        selectPracticeSong.addEventListener('change', (e) => {
-            applySongTranspose(e.target.value);
-        });
-
+        selectPracticeSong.addEventListener('change', (e) => applySongTranspose(e.target.value));
         checkboxShowNext.addEventListener('change', () => { if(isPracticing) updatePracticeUI(); });
         checkboxShowLyrics.addEventListener('change', () => { if(isPracticing) updatePracticeUI(); });
 
         function checkAndExpandRangeForPractice() {
             if (!isPracticing || practiceSongData.length === 0) return;
-            
-            // 現在の曲のメロディデータから、必要な最低音と最高音を動的に計算する
-            let reqMin = 127;
-            let reqMax = 0;
+            let reqMin = 127, reqMax = 0;
             practiceSongData.forEach(note => {
                 const targetMidi = note - currentTranspose - (octaveShift * 12);
                 if (targetMidi < reqMin) reqMin = targetMidi;
@@ -573,14 +532,11 @@
             });
 
             if (startNote > reqMin || endNote < reqMax) {
-                startNote = Math.min(startNote, reqMin - 4);
-                endNote = Math.max(endNote, reqMax + 5);
-                // MIDI規格の範囲内に収める
-                startNote = Math.max(MIN_MIDI, startNote);
-                endNote = Math.min(MAX_MIDI, endNote);
+                startNote = Math.max(MIN_MIDI, Math.min(startNote, reqMin - 4));
+                endNote = Math.min(MAX_MIDI, Math.max(endNote, reqMax + 5));
                 numKeys = endNote - startNote + 1;
                 updateSliderUI();
-                createKeyboard(); // 内部で updatePracticeUI も呼ばれる
+                createKeyboard();
             } else {
                 updatePracticeUI();
             }
@@ -588,18 +544,13 @@
 
         function startPractice() {
             const songKey = selectPracticeSong.value;
-            if (!songKey) {
-                alert("曲を選択して下さい。");
-                return;
-            }
-            
+            if (!songKey) { alert("曲を選択して下さい。"); return; }
             practiceSongData = songs[songKey];
             practiceStep = 0;
             isPracticing = true;
             btnPracticeStart.classList.add('hidden');
             btnPracticeStop.classList.remove('hidden');
-            practiceStatus.innerText = '練習中... ◎の鍵盤を弾いてください';
-            
+            practiceStatus.innerText = '練習中... 黄色く光る鍵盤を弾いてください';
             checkAndExpandRangeForPractice();
         }
 
@@ -608,7 +559,7 @@
             btnPracticeStart.classList.remove('hidden');
             btnPracticeStop.classList.add('hidden');
             practiceStatus.innerText = '';
-            updatePracticeUI(); // マーク消去
+            updatePracticeUI();
         }
 
         function finishPractice() {
@@ -621,8 +572,10 @@
         }
 
         function updatePracticeUI() {
-            // 既存のマークをすべて削除
+            // リセット
             document.querySelectorAll('.practice-mark').forEach(el => el.remove());
+            document.querySelectorAll('.practice-target').forEach(el => el.classList.remove('practice-target'));
+            
             if (!isPracticing) return;
 
             const songKey = selectPracticeSong.value;
@@ -633,21 +586,22 @@
             // 現在弾くべき音(◎)
             if (practiceStep < practiceSongData.length) {
                 const currentNote = practiceSongData[practiceStep];
-                // 実音からターゲットの鍵盤位置を逆算
                 const targetBaseMidi = currentNote - currentTranspose - (octaveShift * 12);
                 const keyIdx = targetBaseMidi - startNote;
+                
                 if (keyIdx >= 0 && keyIdx < numKeys) {
                     const keyEl = document.getElementById(`key-${keyIdx}`);
                     if (keyEl) {
+                        // 鍵盤自体を黄色に光らせる
+                        keyEl.classList.add('practice-target');
+
                         const mark = document.createElement('div');
                         mark.className = 'practice-mark';
-                        
                         let lyricHtml = '';
                         if (showLyrics && songLyrics && songLyrics[practiceStep]) {
                             lyricHtml = `<span class="text-[0.65rem] text-red-600 mt-1">${songLyrics[practiceStep]}</span>`;
                         }
                         mark.innerHTML = `<span>◎</span>${lyricHtml}`;
-                        
                         keyEl.appendChild(mark);
                     }
                 }
@@ -656,59 +610,44 @@
             // 次に弾くべき音(◯)
             if (showNext && practiceStep + 1 < practiceSongData.length) {
                 const nextNote = practiceSongData[practiceStep + 1];
-                // 実音からターゲットの鍵盤位置を逆算
                 const targetBaseMidi = nextNote - currentTranspose - (octaveShift * 12);
                 const keyIdx = targetBaseMidi - startNote;
-                // 現在の音と同じ鍵盤を連続で弾く場合は、◯を重ねない
                 if (nextNote !== practiceSongData[practiceStep] && keyIdx >= 0 && keyIdx < numKeys) {
                     const keyEl = document.getElementById(`key-${keyIdx}`);
                     if (keyEl) {
                         const mark = document.createElement('div');
                         mark.className = 'practice-mark';
-                        mark.style.opacity = '0.5'; // 少し薄くする
-                        
+                        mark.style.opacity = '0.5';
                         let lyricHtml = '';
                         if (showLyrics && songLyrics && songLyrics[practiceStep + 1]) {
                             lyricHtml = `<span class="text-[0.65rem] text-red-600 mt-1">${songLyrics[practiceStep + 1]}</span>`;
                         }
                         mark.innerHTML = `<span>◯</span>${lyricHtml}`;
-                        
                         keyEl.appendChild(mark);
                     }
                 }
             }
         }
 
-        // 拍手音の生成 (Web Audio APIのホワイトノイズを使用)
         function playApplause() {
             initAudio();
-            const duration = 2.5; // 拍手の長さ(秒)
-            const count = 60; // 拍手の密度
+            const duration = 2.5, count = 60;
             for (let i = 0; i < count; i++) {
                 const time = audioCtx.currentTime + Math.random() * duration;
-                
                 const bufferSize = audioCtx.sampleRate * 0.15;
                 const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                 const data = buffer.getChannelData(0);
-                for (let j = 0; j < bufferSize; j++) {
-                    data[j] = Math.random() * 2 - 1; // ノイズ生成
-                }
+                for (let j = 0; j < bufferSize; j++) data[j] = Math.random() * 2 - 1;
                 const noise = audioCtx.createBufferSource();
                 noise.buffer = buffer;
-                
-                // 拍手っぽくするためにバンドパスフィルターをかける
                 const filter = audioCtx.createBiquadFilter();
                 filter.type = 'bandpass';
-                filter.frequency.value = 1200 + Math.random() * 800; // 周波数を少しバラけさせる
-                
+                filter.frequency.value = 1200 + Math.random() * 800;
                 const gain = audioCtx.createGain();
                 gain.gain.setValueAtTime(0, time);
-                gain.gain.linearRampToValueAtTime(0.3 * Math.random(), time + 0.01); // アタック
-                gain.gain.exponentialRampToValueAtTime(0.001, time + 0.1); // ディケイ
-                
-                noise.connect(filter);
-                filter.connect(gain);
-                gain.connect(audioCtx.destination);
+                gain.gain.linearRampToValueAtTime(0.3 * Math.random(), time + 0.01);
+                gain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
+                noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
                 noise.start(time);
             }
         }
@@ -716,16 +655,11 @@
         btnPracticeStart.addEventListener('click', startPractice);
         btnPracticeStop.addEventListener('click', stopPractice);
 
-        // --- 音域スライダーのイベント処理 ---
-        let activeThumb = null;
-        let trackDragStartX = 0;
-        let trackDragStartNote = 0;
-        let trackDragEndNote = 0;
+        let activeThumb = null, trackDragStartX = 0, trackDragStartNote = 0, trackDragEndNote = 0;
 
         function updateSliderUI() {
             const leftPercent = ((startNote - MIN_MIDI) / (MAX_MIDI - MIN_MIDI)) * 100;
             const rightPercent = ((endNote - MIN_MIDI) / (MAX_MIDI - MIN_MIDI)) * 100;
-            
             thumbLeft.style.left = `${leftPercent}%`;
             thumbRight.style.left = `${rightPercent}%`;
             rangeTrack.style.left = `${leftPercent}%`;
@@ -735,8 +669,7 @@
         function getNoteFromX(clientX) {
             const innerContainer = document.querySelector('#range-slider-container > div');
             const rect = innerContainer.getBoundingClientRect();
-            let percent = (clientX - rect.left) / rect.width;
-            percent = Math.max(0, Math.min(1, percent));
+            let percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
             return Math.round(MIN_MIDI + percent * (MAX_MIDI - MIN_MIDI));
         }
 
@@ -753,127 +686,64 @@
         thumbLeft.addEventListener('mousedown', (e) => handleThumbDown(e, 'left'));
         thumbRight.addEventListener('mousedown', (e) => handleThumbDown(e, 'right'));
         rangeTrack.addEventListener('mousedown', (e) => handleThumbDown(e, 'track'));
-        
         thumbLeft.addEventListener('touchstart', (e) => handleThumbDown(e, 'left'), {passive: false});
         thumbRight.addEventListener('touchstart', (e) => handleThumbDown(e, 'right'), {passive: false});
         rangeTrack.addEventListener('touchstart', (e) => handleThumbDown(e, 'track'), {passive: false});
 
         function handleThumbMove(clientX) {
             if (!activeThumb) return;
-            
             if (activeThumb === 'track') {
                 const innerContainer = document.querySelector('#range-slider-container > div');
-                const rect = innerContainer.getBoundingClientRect();
-                const deltaX = clientX - trackDragStartX;
-                const deltaPercent = deltaX / rect.width;
-                const deltaNote = Math.round(deltaPercent * (MAX_MIDI - MIN_MIDI));
-                
-                let newStart = trackDragStartNote + deltaNote;
-                let newEnd = trackDragEndNote + deltaNote;
-                
-                // 範囲外に行かないように補正
-                if (newStart < MIN_MIDI) {
-                    newStart = MIN_MIDI;
-                    newEnd = newStart + (trackDragEndNote - trackDragStartNote);
-                }
-                if (newEnd > MAX_MIDI) {
-                    newEnd = MAX_MIDI;
-                    newStart = newEnd - (trackDragEndNote - trackDragStartNote);
-                }
-                
-                startNote = newStart;
-                endNote = newEnd;
+                const deltaNote = Math.round(((clientX - trackDragStartX) / innerContainer.getBoundingClientRect().width) * (MAX_MIDI - MIN_MIDI));
+                let newStart = trackDragStartNote + deltaNote, newEnd = trackDragEndNote + deltaNote;
+                if (newStart < MIN_MIDI) { newStart = MIN_MIDI; newEnd = newStart + (trackDragEndNote - trackDragStartNote); }
+                if (newEnd > MAX_MIDI) { newEnd = MAX_MIDI; newStart = newEnd - (trackDragEndNote - trackDragStartNote); }
+                startNote = newStart; endNote = newEnd;
             } else {
                 const note = getNoteFromX(clientX);
-                if (activeThumb === 'left') {
-                    if (note < endNote - 11) { // 最小1オクターブ幅を確保
-                        startNote = note;
-                    } else {
-                        startNote = endNote - 11;
-                    }
-                } else if (activeThumb === 'right') {
-                    if (note > startNote + 11) {
-                        endNote = note;
-                    } else {
-                        endNote = startNote + 11;
-                    }
-                }
+                if (activeThumb === 'left') startNote = Math.min(note, endNote - 11);
+                else if (activeThumb === 'right') endNote = Math.max(note, startNote + 11);
             }
             numKeys = endNote - startNote + 1;
-            updateSliderUI();
-            createKeyboard();
+            updateSliderUI(); createKeyboard();
         }
 
-        window.addEventListener('mousemove', (e) => {
-            if (activeThumb) handleThumbMove(e.clientX);
-        });
-        
-        window.addEventListener('touchmove', (e) => {
-            if (activeThumb) {
-                handleThumbMove(e.changedTouches[0].clientX);
-            }
-        }, {passive: false});
-
+        window.addEventListener('mousemove', (e) => { if (activeThumb) handleThumbMove(e.clientX); });
+        window.addEventListener('touchmove', (e) => { if (activeThumb) handleThumbMove(e.changedTouches[0].clientX); }, {passive: false});
         const resetThumb = () => activeThumb = null;
-        window.addEventListener('mouseup', resetThumb);
-        window.addEventListener('touchend', resetThumb);
-        window.addEventListener('touchcancel', resetThumb);
+        window.addEventListener('mouseup', resetThumb); window.addEventListener('touchend', resetThumb); window.addEventListener('touchcancel', resetThumb);
 
-        // --- 入力イベントリスナー ---
-        
-        // マウス＆タッチ用状態管理
-        let isDragging = false;
-        let currentTouchKeys = new Map(); // touchId -> baseMidi
+        let isDragging = false, currentTouchKeys = new Map();
 
         function getKeyBaseMidiFromEvent(e) {
             let el = e.target;
-            if (e.type.startsWith('touch') && e.changedTouches.length > 0) {
-                const touch = e.changedTouches[0];
-                el = document.elementFromPoint(touch.clientX, touch.clientY);
-            }
-            if (el && el.id && el.id.startsWith('key-')) {
-                const keyIndex = parseInt(el.dataset.index, 10);
-                return startNote + keyIndex;
-            }
+            if (e.type.startsWith('touch') && e.changedTouches.length > 0) el = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+            if (el && el.id && el.id.startsWith('key-')) return startNote + parseInt(el.dataset.index, 10);
             return null;
         }
 
-        // マウスイベント
         keyboardContainer.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            initAudio();
+            isDragging = true; initAudio();
             const baseMidi = getKeyBaseMidiFromEvent(e);
             if (baseMidi !== null) noteOn(baseMidi);
         });
-
         window.addEventListener('mouseup', () => {
-            isDragging = false;
-            // 全てのUIノートをオフにする（安全策）
-            activeUINotes.forEach(baseMidi => noteOff(baseMidi));
+            isDragging = false; activeUINotes.forEach(baseMidi => noteOff(baseMidi));
         });
-
         keyboardContainer.addEventListener('mouseover', (e) => {
-            if (!isDragging) return;
-            const baseMidi = getKeyBaseMidiFromEvent(e);
-            if (baseMidi !== null) noteOn(baseMidi);
+            if (isDragging) { const baseMidi = getKeyBaseMidiFromEvent(e); if (baseMidi !== null) noteOn(baseMidi); }
         });
-
         keyboardContainer.addEventListener('mouseout', (e) => {
-            if (!isDragging) return;
-            const baseMidi = getKeyBaseMidiFromEvent(e);
-            if (baseMidi !== null) noteOff(baseMidi);
+            if (isDragging) { const baseMidi = getKeyBaseMidiFromEvent(e); if (baseMidi !== null) noteOff(baseMidi); }
         });
 
-        // タッチイベント (マルチタッチ、スライド対応)
         keyboardContainer.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // スクロール防止
-            initAudio();
+            e.preventDefault(); initAudio();
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const touch = e.changedTouches[i];
                 const el = document.elementFromPoint(touch.clientX, touch.clientY);
                 if (el && el.id && el.id.startsWith('key-')) {
-                    const keyIndex = parseInt(el.dataset.index, 10);
-                    const baseMidi = startNote + keyIndex;
+                    const baseMidi = startNote + parseInt(el.dataset.index, 10);
                     currentTouchKeys.set(touch.identifier, baseMidi);
                     noteOn(baseMidi);
                 }
@@ -886,20 +756,11 @@
                 const touch = e.changedTouches[i];
                 const el = document.elementFromPoint(touch.clientX, touch.clientY);
                 const prevMidi = currentTouchKeys.get(touch.identifier);
-                
-                let newMidi = null;
-                if (el && el.id && el.id.startsWith('key-')) {
-                    newMidi = startNote + parseInt(el.dataset.index, 10);
-                }
-
+                let newMidi = (el && el.id && el.id.startsWith('key-')) ? startNote + parseInt(el.dataset.index, 10) : null;
                 if (prevMidi !== newMidi) {
                     if (prevMidi !== null && prevMidi !== undefined) noteOff(prevMidi);
-                    if (newMidi !== null) {
-                        currentTouchKeys.set(touch.identifier, newMidi);
-                        noteOn(newMidi);
-                    } else {
-                        currentTouchKeys.delete(touch.identifier);
-                    }
+                    if (newMidi !== null) { currentTouchKeys.set(touch.identifier, newMidi); noteOn(newMidi); }
+                    else currentTouchKeys.delete(touch.identifier);
                 }
             }
         }, { passive: false });
@@ -909,275 +770,99 @@
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const touch = e.changedTouches[i];
                 const baseMidi = currentTouchKeys.get(touch.identifier);
-                if (baseMidi !== undefined && baseMidi !== null) {
-                    noteOff(baseMidi);
-                    currentTouchKeys.delete(touch.identifier);
-                }
+                if (baseMidi !== undefined && baseMidi !== null) { noteOff(baseMidi); currentTouchKeys.delete(touch.identifier); }
             }
         };
-
         keyboardContainer.addEventListener('touchend', handleTouchEnd, { passive: false });
         keyboardContainer.addEventListener('touchcancel', handleTouchEnd, { passive: false });
 
-        // PCキーボードイベント
         window.addEventListener('keydown', (e) => {
             if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
             const key = e.key.toLowerCase();
             if (keyMap.hasOwnProperty(key)) {
-                // PCのキーボードは C3(48) を基準として動作
                 const baseMidi = 48 + keyMap[key];
-                if (baseMidi >= MIN_MIDI && baseMidi <= MAX_MIDI) {
-                    initAudio();
-                    noteOn(baseMidi);
-                }
+                if (baseMidi >= MIN_MIDI && baseMidi <= MAX_MIDI) { initAudio(); noteOn(baseMidi); }
             }
         });
-
         window.addEventListener('keyup', (e) => {
             const key = e.key.toLowerCase();
-            if (keyMap.hasOwnProperty(key)) {
-                const baseMidi = 48 + keyMap[key];
-                noteOff(baseMidi);
-            }
+            if (keyMap.hasOwnProperty(key)) noteOff(48 + keyMap[key]);
         });
 
-        // --- コントロールのイベント ---
         instrumentSelect.addEventListener('change', (e) => currentInstrument = e.target.value);
-        
         transposeSelect.addEventListener('change', (e) => {
-            currentTranspose = parseInt(e.target.value, 10);
-            requestAnimationFrame(drawStaff);
-            if (isPracticing) checkAndExpandRangeForPractice(); // 追加: 移調変更時もマーク位置を更新
+            currentTranspose = parseInt(e.target.value, 10); requestAnimationFrame(drawStaff);
+            if (isPracticing) checkAndExpandRangeForPractice();
         });
+        showLabelsCheckbox.addEventListener('change', (e) => e.target.checked ? keyboardContainer.classList.add('show-labels') : keyboardContainer.classList.remove('show-labels'));
+        Array.from(radioAccidentals).forEach(radio => radio.addEventListener('change', (e) => { preferFlat = (e.target.value === 'flat'); requestAnimationFrame(drawStaff); }));
 
-        showLabelsCheckbox.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                keyboardContainer.classList.add('show-labels');
-            } else {
-                keyboardContainer.classList.remove('show-labels');
-            }
-        });
+        function updateOctave() { octaveDisplay.innerText = (octaveShift > 0 ? '+' : '') + octaveShift; }
+        octaveUpBtn.addEventListener('click', () => { if (octaveShift < 2) { octaveShift++; updateOctave(); if (isPracticing) checkAndExpandRangeForPractice(); } });
+        octaveDownBtn.addEventListener('click', () => { if (octaveShift > -2) { octaveShift--; updateOctave(); if (isPracticing) checkAndExpandRangeForPractice(); } });
 
-        Array.from(radioAccidentals).forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                preferFlat = (e.target.value === 'flat');
-                requestAnimationFrame(drawStaff);
-            });
-        });
-
-        function updateOctave() {
-            octaveDisplay.innerText = (octaveShift > 0 ? '+' : '') + octaveShift;
-        }
-
-        octaveUpBtn.addEventListener('click', () => {
-            if (octaveShift < 2) {
-                octaveShift++;
-                updateOctave();
-                if (isPracticing) checkAndExpandRangeForPractice(); // 追加: オクターブ変更時もマーク位置を更新
-            }
-        });
-
-        octaveDownBtn.addEventListener('click', () => {
-            if (octaveShift > -2) {
-                octaveShift--;
-                updateOctave();
-                if (isPracticing) checkAndExpandRangeForPractice(); // 追加: オクターブ変更時もマーク位置を更新
-            }
-        });
-
-        // --- Canvas 大譜表の描画 ---
         function resizeCanvas() {
-            const rect = canvas.parentElement.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
-            canvas.width = rect.width * dpr;
-            canvas.height = 180 * dpr;
-            ctx.scale(dpr, dpr);
-            canvas.style.width = `${rect.width}px`;
-            canvas.style.height = `180px`;
+            const rect = canvas.parentElement.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr; canvas.height = 180 * dpr;
+            ctx.scale(dpr, dpr); canvas.style.width = `${rect.width}px`; canvas.style.height = `180px`;
             requestAnimationFrame(drawStaff);
         }
-
         window.addEventListener('resize', resizeCanvas);
 
-        // MIDIノートから白鍵インデックス(C0=0)と臨時記号を取得
         function getNoteDrawInfo(midiNote, useFlat) {
-            const octave = Math.floor(midiNote / 12);
-            const noteClass = midiNote % 12;
-
-            const sharpMap = [
-                { w: 0, a: null }, { w: 0, a: '#' }, { w: 1, a: null }, { w: 1, a: '#' },
-                { w: 2, a: null }, { w: 3, a: null }, { w: 3, a: '#' }, { w: 4, a: null },
-                { w: 4, a: '#' }, { w: 5, a: null }, { w: 5, a: '#' }, { w: 6, a: null }
-            ];
-            const flatMap = [
-                { w: 0, a: null }, { w: 1, a: 'b' }, { w: 1, a: null }, { w: 2, a: 'b' },
-                { w: 2, a: null }, { w: 3, a: null }, { w: 4, a: 'b' }, { w: 4, a: null },
-                { w: 5, a: 'b' }, { w: 5, a: null }, { w: 6, a: 'b' }, { w: 6, a: null }
-            ];
-
+            const octave = Math.floor(midiNote / 12), noteClass = midiNote % 12;
+            const sharpMap = [{ w: 0, a: null }, { w: 0, a: '#' }, { w: 1, a: null }, { w: 1, a: '#' }, { w: 2, a: null }, { w: 3, a: null }, { w: 3, a: '#' }, { w: 4, a: null }, { w: 4, a: '#' }, { w: 5, a: null }, { w: 5, a: '#' }, { w: 6, a: null }];
+            const flatMap = [{ w: 0, a: null }, { w: 1, a: 'b' }, { w: 1, a: null }, { w: 2, a: 'b' }, { w: 2, a: null }, { w: 3, a: null }, { w: 4, a: 'b' }, { w: 4, a: null }, { w: 5, a: 'b' }, { w: 5, a: null }, { w: 6, a: 'b' }, { w: 6, a: null }];
             const mapInfo = useFlat ? flatMap[noteClass] : sharpMap[noteClass];
-            const absoluteWhiteIdx = octave * 7 + mapInfo.w;
-            
-            return {
-                idx: absoluteWhiteIdx,
-                acc: mapInfo.a,
-                noteName: ['C','D','E','F','G','A','B'][mapInfo.w]
-            };
+            return { idx: octave * 7 + mapInfo.w, acc: mapInfo.a, noteName: ['C','D','E','F','G','A','B'][mapInfo.w] };
         }
 
         function drawStaff() {
-            const width = canvas.width / (window.devicePixelRatio || 1);
-            const height = 180;
-            
+            const width = canvas.width / (window.devicePixelRatio || 1), height = 180;
             ctx.clearRect(0, 0, width, height);
-            
-            const lineSpacing = 10;
-            const halfSpace = lineSpacing / 2;
-            const centerY = height / 2;
-            
-            // C4(MIDI 60)の絶対白鍵インデックス (C0=0 -> C4=35)
-            const C4_IDX = 35;
-            const C4_Y = centerY;
-
-            // Y座標計算関数
+            const lineSpacing = 10, halfSpace = lineSpacing / 2, centerY = height / 2, C4_IDX = 35, C4_Y = centerY;
             const getY = (idx) => C4_Y - (idx - C4_IDX) * halfSpace;
 
-            ctx.strokeStyle = '#64748b';
-            ctx.lineWidth = 1;
-            ctx.fillStyle = '#0f172a';
-            ctx.font = '32px serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
-            // 五線の描画
+            ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1; ctx.fillStyle = '#0f172a'; ctx.font = '32px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.beginPath();
-            // ト音記号 (E4=37 ~ F5=45)
-            for (let i = 0; i < 5; i++) {
-                const y = getY(45 - i * 2);
-                ctx.moveTo(20, y);
-                ctx.lineTo(width - 20, y);
-            }
-            // ヘ音記号 (G2=25 ~ A3=33)
-            for (let i = 0; i < 5; i++) {
-                const y = getY(33 - i * 2);
-                ctx.moveTo(20, y);
-                ctx.lineTo(width - 20, y);
-            }
-            // 両端の縦線とブレース（簡易）
-            ctx.moveTo(20, getY(45)); ctx.lineTo(20, getY(25));
-            ctx.moveTo(width - 20, getY(45)); ctx.lineTo(width - 20, getY(25));
+            for (let i = 0; i < 5; i++) { const y = getY(45 - i * 2); ctx.moveTo(20, y); ctx.lineTo(width - 20, y); }
+            for (let i = 0; i < 5; i++) { const y = getY(33 - i * 2); ctx.moveTo(20, y); ctx.lineTo(width - 20, y); }
+            ctx.moveTo(20, getY(45)); ctx.lineTo(20, getY(25)); ctx.moveTo(width - 20, getY(45)); ctx.lineTo(width - 20, getY(25));
             ctx.stroke();
 
-            // 音部記号の描画 (Noto Musicフォントを使用して印刷風に)
-            // 五線の高さに合わせてサイズを縮小し、位置を調整
-            ctx.font = '48px "Noto Music", serif';
-            ctx.fillText('𝄞', 40, getY(39) - 2); // ト音記号 (G4を中心に、少し上に調整)
-            ctx.fillText('𝄢', 40, getY(31) + 20); // ヘ音記号 (F3=第4線に点が挟まるようにさらに下に調整)
+            ctx.font = '48px "Noto Music", serif'; ctx.fillText('𝄞', 40, getY(39) - 2); ctx.fillText('𝄢', 40, getY(31) + 20);
 
-            // --- 調号の描画 ---
-            const keySigStr = currentTranspose.toString();
-            const keySigData = keySignatures[keySigStr];
+            const keySigData = keySignatures[currentTranspose.toString()];
             let sigStartX = 80;
-
             if (keySigData && keySigData.type) {
-                ctx.font = '24px serif';
-                const isSharp = keySigData.type === '#';
-                
-                // 調号を描画する音階の基準オフセット (C4=35としての白鍵相対位置)
-                const trebleOffsets = {
-                    '#': { 'F': 45, 'C': 42, 'G': 46, 'D': 43, 'A': 40, 'E': 44, 'B': 41 },
-                    'b': { 'B': 41, 'E': 44, 'A': 40, 'D': 43, 'G': 39, 'C': 42, 'F': 38 }
-                };
-                const bassOffsets = {
-                    '#': { 'F': 31, 'C': 28, 'G': 32, 'D': 29, 'A': 26, 'E': 30, 'B': 27 },
-                    'b': { 'B': 27, 'E': 30, 'A': 26, 'D': 29, 'G': 25, 'C': 28, 'F': 24 }
-                };
-
+                ctx.font = '24px serif'; const isSharp = keySigData.type === '#';
+                const trebleOffsets = { '#': { 'F': 45, 'C': 42, 'G': 46, 'D': 43, 'A': 40, 'E': 44, 'B': 41 }, 'b': { 'B': 41, 'E': 44, 'A': 40, 'D': 43, 'G': 39, 'C': 42, 'F': 38 } };
+                const bassOffsets = { '#': { 'F': 31, 'C': 28, 'G': 32, 'D': 29, 'A': 26, 'E': 30, 'B': 27 }, 'b': { 'B': 27, 'E': 30, 'A': 26, 'D': 29, 'G': 25, 'C': 28, 'F': 24 } };
                 keySigData.notes.forEach(noteName => {
-                    const tIdx = trebleOffsets[keySigData.type][noteName];
-                    const bIdx = bassOffsets[keySigData.type][noteName];
-                    
-                    // シャープ/フラット記号
-                    const sym = isSharp ? '♯' : '♭';
-                    // ト音記号側
-                    ctx.fillText(sym, sigStartX, getY(tIdx) + (isSharp ? 2 : -2));
-                    // ヘ音記号側
-                    ctx.fillText(sym, sigStartX, getY(bIdx) + (isSharp ? 2 : -2));
-                    
+                    const tIdx = trebleOffsets[keySigData.type][noteName], bIdx = bassOffsets[keySigData.type][noteName], sym = isSharp ? '♯' : '♭';
+                    ctx.fillText(sym, sigStartX, getY(tIdx) + (isSharp ? 2 : -2)); ctx.fillText(sym, sigStartX, getY(bIdx) + (isSharp ? 2 : -2));
                     sigStartX += 15;
                 });
             }
 
-            // --- 現在鳴っている音符の描画 ---
-            const drawStartX = sigStartX + 40;
-            let noteOffsetX = 0;
-
-            // 実音の配列を作成し、音高でソート
-            const activeMidiNotes = Array.from(activeNotes.values())
-                                        .map(n => n.actualNote)
-                                        .sort((a, b) => a - b);
-
+            const drawStartX = sigStartX + 40; let noteOffsetX = 0;
+            const activeMidiNotes = Array.from(activeNotes.values()).map(n => n.actualNote).sort((a, b) => a - b);
             activeMidiNotes.forEach((midiNote) => {
-                const info = getNoteDrawInfo(midiNote, preferFlat);
-                const y = getY(info.idx);
-                const x = drawStartX + noteOffsetX;
-
-                // 臨時記号の描画
-                if (info.acc) {
-                    ctx.font = '24px serif';
-                    const sym = info.acc === '#' ? '♯' : '♭';
-                    ctx.fillText(sym, x - 18, y + (info.acc === '#' ? 2 : -2));
-                }
-
-                // 符頭の描画 (黒丸)
-                ctx.beginPath();
-                ctx.ellipse(x, y, 7, 5, -Math.PI / 8, 0, 2 * Math.PI);
-                ctx.fill();
-
-                // 加線の描画 (五線の外側やC4の場合)
-                ctx.beginPath();
-                ctx.lineWidth = 1.5;
-                
-                // ト音記号の上 (A5=47以降)
-                if (info.idx >= 47) {
-                    for (let i = 47; i <= info.idx; i += 2) {
-                        const ly = getY(i);
-                        ctx.moveTo(x - 12, ly); ctx.lineTo(x + 12, ly);
-                    }
-                }
-                // ヘ音記号の下 (E2=23以前)
-                if (info.idx <= 23) {
-                    for (let i = 23; i >= info.idx; i -= 2) {
-                        const ly = getY(i);
-                        ctx.moveTo(x - 12, ly); ctx.lineTo(x + 12, ly);
-                    }
-                }
-                // 中央のC4 (idx 35) の加線
-                if (info.idx === 35) {
-                    ctx.moveTo(x - 12, y); ctx.lineTo(x + 12, y);
-                }
+                const info = getNoteDrawInfo(midiNote, preferFlat), y = getY(info.idx), x = drawStartX + noteOffsetX;
+                if (info.acc) { ctx.font = '24px serif'; ctx.fillText(info.acc === '#' ? '♯' : '♭', x - 18, y + (info.acc === '#' ? 2 : -2)); }
+                ctx.beginPath(); ctx.ellipse(x, y, 7, 5, -Math.PI / 8, 0, 2 * Math.PI); ctx.fill();
+                ctx.beginPath(); ctx.lineWidth = 1.5;
+                if (info.idx >= 47) for (let i = 47; i <= info.idx; i += 2) { const ly = getY(i); ctx.moveTo(x - 12, ly); ctx.lineTo(x + 12, ly); }
+                if (info.idx <= 23) for (let i = 23; i >= info.idx; i -= 2) { const ly = getY(i); ctx.moveTo(x - 12, ly); ctx.lineTo(x + 12, ly); }
+                if (info.idx === 35) { ctx.moveTo(x - 12, y); ctx.lineTo(x + 12, y); }
                 ctx.stroke();
-
-                noteOffsetX += 35; // 和音を少し横にずらす（簡易的な重なり回避）
-                if(noteOffsetX > width - drawStartX - 40) noteOffsetX = 0;
+                noteOffsetX += 35; if(noteOffsetX > width - drawStartX - 40) noteOffsetX = 0;
             });
         }
 
-        // 追加・変更: フォントが確実に読み込まれたら再描画する（文字化け防止策の強化）
-        if (document.fonts) {
-            document.fonts.load('48px "Noto Music"').then(() => {
-                requestAnimationFrame(drawStaff);
-            });
-            document.fonts.ready.then(() => {
-                requestAnimationFrame(drawStaff);
-            });
-        }
+        if (document.fonts) { document.fonts.load('48px "Noto Music"').then(() => requestAnimationFrame(drawStaff)); document.fonts.ready.then(() => requestAnimationFrame(drawStaff)); }
 
-        // 初期化実行
-        updateSliderUI();
-        createKeyboard();
-        resizeCanvas();
-
+        updateSliderUI(); createKeyboard(); resizeCanvas();
     </script>
 </body>
 </html>
