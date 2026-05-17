@@ -39,12 +39,10 @@
             overflow: hidden;
         }
 
-        /* 修正: 白鍵を押したときのスタイル（沈み込みと背景の暗転のみ） */
         .key-white.active {
             background: #e2e8f0;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
             transform: translateY(1px);
-            /* 黒鍵を隠さないようにz-indexは上げない */
         }
 
         .key-black {
@@ -59,14 +57,12 @@
             transition: background 0.05s, transform 0.05s, box-shadow 0.05s;
         }
 
-        /* 修正: 黒鍵を押したときのスタイル（沈み込みと背景の暗転のみ） */
         .key-black.active {
             background: #1e293b;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
             transform: translateY(1px);
         }
 
-        /* 発音時の光（擬似要素で実装し、きれいにフェードアウトさせる） */
         .key-white::after, .key-black::after {
             content: '';
             position: absolute;
@@ -74,23 +70,21 @@
             pointer-events: none;
             opacity: 0;
             border-radius: inherit;
-            transition: opacity 0.6s ease-out; /* ふんわり消えるフェードアウト時間 */
+            transition: opacity 0.6s ease-out;
         }
 
         .key-white::after {
-            box-shadow: inset 0 0 0 4px #3b82f6; /* 青い光 */
+            box-shadow: inset 0 0 0 4px #3b82f6;
         }
         .key-black::after {
             box-shadow: inset 0 0 0 3px #3b82f6;
         }
 
-        /* 押した瞬間の光（フェードイン） */
         .key-white.flash::after, .key-black.flash::after {
             opacity: 1;
-            transition: opacity 0.05s ease-in; /* 光る時は一瞬 */
+            transition: opacity 0.05s ease-in;
         }
 
-        /* 修正: 次に押すべき鍵盤の着色（全体を黄色に塗りつぶす） */
         .key-white.practice-target {
             background: linear-gradient(to bottom, #fef08a 0%, #fde047 100%) !important;
         }
@@ -222,7 +216,7 @@
                         <button id="btn-practice-start" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold text-sm shadow transition-colors">スタート</button>
                         <button id="btn-practice-stop" class="px-4 py-2 bg-slate-400 hover:bg-slate-500 text-white rounded font-bold text-sm shadow transition-colors hidden">中断</button>
                     </div>
-                    <div class="flex items-center gap-4 text-sm text-slate-700 mb-1">
+                    <div class="flex items-center gap-4 text-sm text-slate-700 mb-1 mt-2 flex-wrap">
                         <label class="flex items-center cursor-pointer">
                             <input type="checkbox" id="practice-show-next" checked class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
                             <span class="ms-2 font-medium">次の音(◯)を表示</span>
@@ -231,8 +225,13 @@
                             <input type="checkbox" id="practice-show-lyrics" checked class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
                             <span class="ms-2 font-medium">歌詞を表示</span>
                         </label>
+                        <!-- 追加: オリジナルモードのスイッチ -->
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="practice-original-mode" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
+                            <span class="ms-2 font-medium text-blue-700">オリジナルモード（原曲の調で弾く）</span>
+                        </label>
                     </div>
-                    <p id="practice-status" class="text-xs text-blue-600 font-medium h-4"></p>
+                    <p id="practice-status" class="text-xs text-blue-600 font-medium h-4 mt-1"></p>
                 </div>
             </div>
             <p id="pc-keyboard-hint" class="text-center text-xs text-slate-500 mt-4 transition-colors">
@@ -289,7 +288,7 @@
         let isPracticing = false;
         let practiceSongData = [];
         let practiceStep = 0;
-        let pcKeyboardBaseMidi = 48; // 追加: PCキーボードの Zキー に割り当てる基準MIDIノート
+        let pcKeyboardBaseMidi = 48;
         
         // 校歌のメロディデータ（ニ長調: +2シフト済みの実音）
         const songs = {
@@ -381,10 +380,8 @@
             famicom: { type1: 'square', type2: 'square', detune: 0, attack: 0.01, decay: 0.5, sustain: 0.2, release: 0.4, filterFreq: 8000 }
         };
 
-        // 削除: 固定の keyMap を削除し、動的生成に切り替えます
         let dynamicKeyMap = {};
 
-        // 追加: 任意の白鍵からスタートし、PCキーボードに「白鍵と黒鍵」を動的に敷き詰める関数
         function buildKeyMap(baseMidi) {
             dynamicKeyMap = {};
             const bottomWhites = ['z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', '\\'];
@@ -392,7 +389,6 @@
             const topWhites = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '@', '['];
             const topBlacks = ['2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '^'];
 
-            // 環境によるキーコードの違い（\と¥など）を吸収するエイリアス
             const aliases = {
                 '\\': ['¥', '_'],
                 '[': [']']
@@ -405,14 +401,12 @@
                 }
             };
 
-            // 下段（Z列）と中段（A列）の割り当て
             let currentMidi = baseMidi;
             let whiteIndex = 0;
             while (whiteIndex < bottomWhites.length && currentMidi <= MAX_MIDI) {
                 const isWhite = [0, 2, 4, 5, 7, 9, 11].includes(currentMidi % 12);
                 if (isWhite) {
                     assignKey(bottomWhites[whiteIndex], currentMidi);
-                    // 次の音（半音上）が黒鍵なら、対応するA列に割り当てる
                     if (currentMidi + 1 <= MAX_MIDI && ![0, 2, 4, 5, 7, 9, 11].includes((currentMidi + 1) % 12)) {
                         if (whiteIndex < bottomBlacks.length) {
                             assignKey(bottomBlacks[whiteIndex], currentMidi + 1);
@@ -423,7 +417,6 @@
                 currentMidi++;
             }
 
-            // 上段（Q列）と最上段（数字列）の割り当て（1オクターブ上）
             let topMidi = baseMidi + 12;
             let topWhiteIndex = 0;
             while (topWhiteIndex < topWhites.length && topMidi <= MAX_MIDI) {
@@ -539,9 +532,7 @@
                 const keyEl = document.getElementById(`key-${keyIndex}`);
                 if (keyEl) {
                     keyEl.classList.add('active');
-                    // 押した瞬間に枠線を光らせる
                     keyEl.classList.add('flash');
-                    // 50ミリ秒後にflashクラスを外すと、そこからCSSのフェードアウトが始まる
                     setTimeout(() => {
                         if (keyEl) keyEl.classList.remove('flash');
                     }, 50);
@@ -549,6 +540,7 @@
             }
 
             if (isPracticing) {
+                // オリジナルモード（currentTranspose = 0）ならそのままの鍵盤位置になる
                 const targetBaseMidi = practiceSongData[practiceStep] - currentTranspose - (octaveShift * 12);
                 if (baseMidi === targetBaseMidi) {
                     practiceStep++;
@@ -631,6 +623,25 @@
         const practiceStatus = document.getElementById('practice-status');
         const checkboxShowNext = document.getElementById('practice-show-next');
         const checkboxShowLyrics = document.getElementById('practice-show-lyrics');
+        const checkboxOriginalMode = document.getElementById('practice-original-mode');
+
+        // オリジナルモードのチェックボックス操作時の連動
+        checkboxOriginalMode.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                // オリジナルモードON ＝ 移調をハ長調（±0）にする
+                transposeSelect.value = "0";
+            } else {
+                // オリジナルモードOFF ＝ その曲のデフォルトの移調に戻す
+                const songKey = selectPracticeSong.value;
+                if (songKey && songsTranspose[songKey] !== undefined) {
+                    transposeSelect.value = songsTranspose[songKey].toString();
+                } else {
+                    transposeSelect.value = "0";
+                }
+            }
+            // 移調セレクトのchangeイベントを発火させて画面や配列を更新する
+            transposeSelect.dispatchEvent(new Event('change'));
+        });
 
         function applySongTranspose(songKey) {
             if (!songKey) return;
@@ -645,7 +656,6 @@
         checkboxShowNext.addEventListener('change', () => { if(isPracticing) updatePracticeUI(); });
         checkboxShowLyrics.addEventListener('change', () => { if(isPracticing) updatePracticeUI(); });
 
-        // 変更: 動的キーマップの構築アルゴリズム
         function updatePCKeyboardBase() {
             const hintEl = document.getElementById('pc-keyboard-hint');
             if (!isPracticing || practiceSongData.length === 0) {
@@ -661,6 +671,7 @@
             
             let minTargetBaseMidi = 127;
             let maxTargetBaseMidi = 0;
+            
             practiceSongData.forEach(note => {
                 const targetBaseMidi = note - currentTranspose - (octaveShift * 12);
                 if (targetBaseMidi < minTargetBaseMidi) minTargetBaseMidi = targetBaseMidi;
@@ -669,10 +680,10 @@
 
             // 曲の最低音の白鍵をZキーにする
             let newBase = minTargetBaseMidi;
-            if ([1, 3, 6, 8, 10].includes(newBase % 12)) newBase -= 1; // 黒鍵なら半音下げて白鍵に
+            if ([1, 3, 6, 8, 10].includes(newBase % 12)) newBase -= 1;
             
             pcKeyboardBaseMidi = newBase;
-            buildKeyMap(pcKeyboardBaseMidi); // 新しい基準音で配列を再構築
+            buildKeyMap(pcKeyboardBaseMidi);
             
             const solfegeNames = ['ド', 'ド♯', 'レ', 'レ♯', 'ミ', 'ファ', 'ファ♯', 'ソ', 'ソ♯', 'ラ', 'ラ♯', 'シ'];
             const zSolfege = solfegeNames[pcKeyboardBaseMidi % 12];
@@ -686,9 +697,10 @@
         function checkAndExpandRangeForPractice() {
             if (!isPracticing || practiceSongData.length === 0) return;
             
-            updatePCKeyboardBase(); // 追加: キーボード配置を更新
+            updatePCKeyboardBase();
 
             let reqMin = 127, reqMax = 0;
+            
             practiceSongData.forEach(note => {
                 const targetMidi = note - currentTranspose - (octaveShift * 12);
                 if (targetMidi < reqMin) reqMin = targetMidi;
@@ -724,7 +736,7 @@
             btnPracticeStop.classList.add('hidden');
             practiceStatus.innerText = '';
             updatePracticeUI();
-            updatePCKeyboardBase(); // 追加: 練習中止時に配列を元に戻す
+            updatePCKeyboardBase();
         }
 
         function finishPractice() {
@@ -733,12 +745,11 @@
             btnPracticeStop.classList.add('hidden');
             practiceStatus.innerText = 'クリア！おめでとうございます！';
             updatePracticeUI();
-            updatePCKeyboardBase(); // 追加: クリア時に配列を元に戻す
+            updatePCKeyboardBase();
             playApplause();
         }
 
         function updatePracticeUI() {
-            // リセット
             document.querySelectorAll('.practice-mark').forEach(el => el.remove());
             document.querySelectorAll('.practice-target').forEach(el => el.classList.remove('practice-target'));
             
@@ -749,7 +760,6 @@
             const showNext = checkboxShowNext.checked;
             const showLyrics = checkboxShowLyrics.checked;
 
-            // 現在弾くべき音(◎)
             if (practiceStep < practiceSongData.length) {
                 const currentNote = practiceSongData[practiceStep];
                 const targetBaseMidi = currentNote - currentTranspose - (octaveShift * 12);
@@ -758,7 +768,6 @@
                 if (keyIdx >= 0 && keyIdx < numKeys) {
                     const keyEl = document.getElementById(`key-${keyIdx}`);
                     if (keyEl) {
-                        // 鍵盤自体を黄色に光らせる
                         keyEl.classList.add('practice-target');
 
                         const mark = document.createElement('div');
@@ -773,7 +782,6 @@
                 }
             }
 
-            // 次に弾くべき音(◯)
             if (showNext && practiceStep + 1 < practiceSongData.length) {
                 const nextNote = practiceSongData[practiceStep + 1];
                 const targetBaseMidi = nextNote - currentTranspose - (octaveShift * 12);
@@ -945,7 +953,6 @@
         window.addEventListener('keydown', (e) => {
             if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
             const key = e.key.toLowerCase();
-            // 変更: 動的キーマップを参照する
             if (dynamicKeyMap.hasOwnProperty(key)) {
                 const baseMidi = dynamicKeyMap[key];
                 if (baseMidi >= MIN_MIDI && baseMidi <= MAX_MIDI) { initAudio(); noteOn(baseMidi); }
@@ -953,13 +960,27 @@
         });
         window.addEventListener('keyup', (e) => {
             const key = e.key.toLowerCase();
-            // 変更: 動的キーマップを参照する
             if (dynamicKeyMap.hasOwnProperty(key)) noteOff(dynamicKeyMap[key]);
         });
 
         instrumentSelect.addEventListener('change', (e) => currentInstrument = e.target.value);
         transposeSelect.addEventListener('change', (e) => {
-            currentTranspose = parseInt(e.target.value, 10); requestAnimationFrame(drawStaff);
+            currentTranspose = parseInt(e.target.value, 10);
+            
+            // 移調が「0（ハ長調）」ならオリジナルモードにチェックを入れる、それ以外なら外す
+            checkboxOriginalMode.checked = (currentTranspose === 0);
+            
+            // 追加: 調号のタイプに合わせて臨時記号の表記設定（# / b）を自動で切り替える
+            const keySigData = keySignatures[currentTranspose.toString()];
+            if (keySigData && keySigData.type === 'b') {
+                preferFlat = true;
+                document.querySelector('input[name="accidental"][value="flat"]').checked = true;
+            } else {
+                preferFlat = false;
+                document.querySelector('input[name="accidental"][value="sharp"]').checked = true;
+            }
+            
+            requestAnimationFrame(drawStaff);
             if (isPracticing) checkAndExpandRangeForPractice();
         });
         showLabelsCheckbox.addEventListener('change', (e) => e.target.checked ? keyboardContainer.classList.add('show-labels') : keyboardContainer.classList.remove('show-labels'));
@@ -982,7 +1003,18 @@
             const sharpMap = [{ w: 0, a: null }, { w: 0, a: '#' }, { w: 1, a: null }, { w: 1, a: '#' }, { w: 2, a: null }, { w: 3, a: null }, { w: 3, a: '#' }, { w: 4, a: null }, { w: 4, a: '#' }, { w: 5, a: null }, { w: 5, a: '#' }, { w: 6, a: null }];
             const flatMap = [{ w: 0, a: null }, { w: 1, a: 'b' }, { w: 1, a: null }, { w: 2, a: 'b' }, { w: 2, a: null }, { w: 3, a: null }, { w: 4, a: 'b' }, { w: 4, a: null }, { w: 5, a: 'b' }, { w: 5, a: null }, { w: 6, a: 'b' }, { w: 6, a: null }];
             const mapInfo = useFlat ? flatMap[noteClass] : sharpMap[noteClass];
-            return { idx: octave * 7 + mapInfo.w, acc: mapInfo.a, noteName: ['C','D','E','F','G','A','B'][mapInfo.w] };
+            const noteName = ['C','D','E','F','G','A','B'][mapInfo.w];
+            let acc = mapInfo.a;
+
+            // 追加: 調号の影響をチェックして、必要な場合にナチュラル記号を付与する
+            const currentKeySig = keySignatures[currentTranspose.toString()];
+            if (currentKeySig && currentKeySig.notes.includes(noteName)) {
+                if (acc === null) {
+                    acc = 'natural'; // 本来は白鍵だが、調号で変化している音なのでナチュラルが必要
+                }
+            }
+
+            return { idx: octave * 7 + mapInfo.w, acc: acc, noteName: noteName };
         }
 
         function drawStaff() {
@@ -1017,7 +1049,18 @@
             const activeMidiNotes = Array.from(activeNotes.values()).map(n => n.actualNote).sort((a, b) => a - b);
             activeMidiNotes.forEach((midiNote) => {
                 const info = getNoteDrawInfo(midiNote, preferFlat), y = getY(info.idx), x = drawStartX + noteOffsetX;
-                if (info.acc) { ctx.font = '24px serif'; ctx.fillText(info.acc === '#' ? '♯' : '♭', x - 18, y + (info.acc === '#' ? 2 : -2)); }
+                
+                // 変更: 臨時記号（♯、♭、♮）の描画ロジック
+                if (info.acc) { 
+                    ctx.font = '24px serif'; 
+                    let sym = '';
+                    let yOffset = 0;
+                    if (info.acc === '#') { sym = '♯'; yOffset = 2; }
+                    else if (info.acc === 'b') { sym = '♭'; yOffset = -2; }
+                    else if (info.acc === 'natural') { sym = '♮'; yOffset = 0; }
+                    ctx.fillText(sym, x - 18, y + yOffset); 
+                }
+                
                 ctx.beginPath(); ctx.ellipse(x, y, 7, 5, -Math.PI / 8, 0, 2 * Math.PI); ctx.fill();
                 ctx.beginPath(); ctx.lineWidth = 1.5;
                 if (info.idx >= 47) for (let i = 47; i <= info.idx; i += 2) { const ly = getY(i); ctx.moveTo(x - 12, ly); ctx.lineTo(x + 12, ly); }
@@ -1030,7 +1073,6 @@
 
         if (document.fonts) { document.fonts.load('48px "Noto Music"').then(() => requestAnimationFrame(drawStaff)); document.fonts.ready.then(() => requestAnimationFrame(drawStaff)); }
 
-        // 初期化処理
         buildKeyMap(pcKeyboardBaseMidi);
         updateSliderUI(); createKeyboard(); resizeCanvas();
     </script>
